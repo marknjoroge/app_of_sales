@@ -1,4 +1,6 @@
+import 'package:app_of_sales/firebase_options.dart';
 import 'package:app_of_sales/utils/constants.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sqflite/sqflite.dart';
@@ -9,6 +11,11 @@ import 'utils/database.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
   var databasesPath = await getDatabasesPath();
   String path = join(databasesPath, 'sales.db');
 

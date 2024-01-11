@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1040978455142",
+    "project_id": "savannarecords-99ad0",
+    "storage_bucket": "savannarecords-99ad0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1040978455142:android:e2023af467bc7fb287dba7",
+        "android_client_info": {
+          "package_name": "com.example.app_of_sales"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbKnqZDY6SoBL3PdkOgnUV48vnPHvHkGU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,6 @@
 class TextDatabaseService {
-  String addEntry() {
+  String addEntry(String entry) {
+    
     return "";
   }
 }

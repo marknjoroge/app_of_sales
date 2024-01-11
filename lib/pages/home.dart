@@ -1,6 +1,8 @@
+import 'package:app_of_sales/pages/edit_entry.dart';
 import 'package:app_of_sales/pages/new_entry.dart';
 import 'package:app_of_sales/pages/profits/profits_page.dart';
 import 'package:app_of_sales/pages/stats/stats_page.dart';
+import 'package:app_of_sales/services/firestore_service.dart';
 import 'package:app_of_sales/services/sqlite_helper.dart';
 import 'package:app_of_sales/utils/constants.dart';
 import 'package:app_of_sales/utils/database.dart';
@@ -22,59 +24,10 @@ class _MyHomePageState extends State<MyHomePage> {
   double soldTotal = 0.0;
   double bought = 0.0;
 
-  List<Map<String, dynamic>> sales = [];
+  List<dynamic> sales = [];
 
-  // List<Map<String, dynamic>> sales = [
-  //   {
-  //     SalesTable.idCol: 1,
-  //     SalesTable.nameCol: 'Product A',
-  //     SalesTable.priceCol: 100,
-  //     SalesTable.timeCol: '9:00 AM',
-  //     SalesTable.dateCol: '2023-10-25',
-  //     SalesTable.quantityCol: 5
-  //   },
-  //   {
-  //     SalesTable.idCol: 2,
-  //     SalesTable.nameCol: 'Product B',
-  //     SalesTable.priceCol: 200,
-  //     SalesTable.timeCol: '10:00 AM',
-  //     SalesTable.dateCol: '2023-10-25',
-  //     SalesTable.quantityCol: 3
-  //   },
-  //   {
-  //     SalesTable.idCol: 3,
-  //     SalesTable.nameCol: 'Product C',
-  //     SalesTable.priceCol: 150,
-  //     SalesTable.timeCol: '11:00 AM',
-  //     SalesTable.dateCol: '2023-10-25',
-  //     SalesTable.quantityCol: 8
-  //   },
-  //   {
-  //     SalesTable.idCol: 4,
-  //     SalesTable.nameCol: 'Product A',
-  //     SalesTable.priceCol: 100,
-  //     SalesTable.timeCol: '9:00 AM',
-  //     SalesTable.dateCol: '2023-10-26',
-  //     SalesTable.quantityCol: 2
-  //   },
-  //   {
-  //     SalesTable.idCol: 5,
-  //     SalesTable.nameCol: 'Product B',
-  //     SalesTable.priceCol: 200,
-  //     SalesTable.timeCol: '10:00 AM',
-  //     SalesTable.dateCol: '2023-10-26',
-  //     SalesTable.quantityCol: 7
-  //   },
-  //   {
-  //     SalesTable.idCol: 6,
-  //     SalesTable.nameCol: 'Product C',
-  //     SalesTable.priceCol: 150,
-  //     SalesTable.timeCol: '11:00 AM',
-  //     SalesTable.dateCol: '2023-10-26',
-  //     SalesTable.quantityCol: 4
-  //   },
-  // ];
   var databaseHelper = DatabaseHelper();
+  var firestoreHelper = FirestoreService();
 
   Future<void> _selectDate(BuildContext context, {DateTime? picked}) async {
     await showDatePicker(
@@ -92,12 +45,20 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void reloadForNewDate() async {
-    await databaseHelper
-        .queryDay(
-          SalesTable.tableName,
-          getNormalDate(selectedDate),
-        )
-        .then((value) => setState(() => sales = value));
+    // await databaseHelper
+    //     .queryDay(
+    //       SalesTable.tableName,
+    //       getNormalDate(selectedDate),
+    //     )
+    //     .then(
+    //       (value) => setState(() => sales = value),
+    //     );
+
+    await firestoreHelper
+        .readAll(SalesTable.tableName, getNormalDate(selectedDate))
+        .then(
+          (value) => setState(() => sales = value),
+        );
     double plus = 0;
     double minus = 0;
     sales.forEach((item) {
@@ -141,9 +102,13 @@ class _MyHomePageState extends State<MyHomePage> {
           },
           icon: const Icon(Icons.show_chart_sharp),
         ),
-        title: Text(
-          "Savannah Bar",
-          style: textTheme.titleMedium,
+        // title: Text(
+        //   "Savannah Bar",
+        //   style: textTheme.titleMedium,
+        // ),
+        title: Image.asset(
+          'assets/images/savanna.png',
+          height: kInputElementHeight,
         ),
         // backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         // title: const Text("Savanna\'s app of sales"),
@@ -153,8 +118,9 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Container(
             padding: const EdgeInsets.all(kPagePadding),
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: kPagePadding),
                 Row(
                   children: [
                     dateCardTopbar(
@@ -196,7 +162,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ProfitsPage(selectedDate: selectedDate,),
+                          builder: (context) => ProfitsPage(
+                            selectedDate: selectedDate,
+                          ),
                         ),
                       ),
                       child: Container(
@@ -226,7 +194,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               ],
                             ),
                             Text(
-                              'Ksh $profit',
+                              'Ksh $soldTotal',
                               style: textTheme.titleLarge,
                             ),
                           ],
@@ -292,10 +260,8 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const NewEntryPage(),
-            ),
-          );
+            MaterialPageRoute(builder: (context) => const NewEntryPage()),
+          ).then((value) => reloadForNewDate());
         },
         tooltip: 'New Sale/Expenditure input',
         foregroundColor: kBgColor,
@@ -400,50 +366,60 @@ class _MyHomePageState extends State<MyHomePage> {
                 color: kBgColor,
                 borderRadius: BorderRadius.circular(kBorderRadius),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('${sale[SalesTable.nameCol]}'),
-                      Text(
-                        '${sale[SalesTable.priceCol]}',
-                        style: TextStyle(
-                          color: (sale[SalesTable.priceCol] < 0)
-                              ? kErrorColor
-                              : kPrimaryColor,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${sale[SalesTable.dateCol]} $interpunct ${sale[SalesTable.timeCol]}',
-                        style: textTheme.labelSmall!.merge(
-                          TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 10,
-                            color: Colors.black.withOpacity(0.5),
+              child: InkWell(
+                onTap: () {
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //       builder: (context) => const EditEntryPage()),
+                  // );
+                  editDdialogBuilder(context);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('${sale[SalesTable.nameCol]}'),
+                        Text(
+                          '${sale[SalesTable.priceCol]}',
+                          style: TextStyle(
+                            color: (sale[SalesTable.priceCol] < 0)
+                                ? kErrorColor
+                                : kPrimaryColor,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                      ),
-                      Text(
-                        '${sale[SalesTable.quantityCol]}',
-                        style: textTheme.labelSmall!.merge(
-                          const TextStyle(
-                            // fontWeight: FontWeight.w900,
-                            fontSize: 10,
-                            // color: Colors.black.withOpacity(0.5),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${sale[SalesTable.dateCol]} $interpunct ${sale[SalesTable.timeCol]}',
+                          style: textTheme.labelSmall!.merge(
+                            TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 10,
+                              color: Colors.black.withOpacity(0.5),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        Text(
+                          '${sale[SalesTable.quantityCol]}',
+                          style: textTheme.labelSmall!.merge(
+                            const TextStyle(
+                              // fontWeight: FontWeight.w900,
+                              fontSize: 10,
+                              // color: Colors.black.withOpacity(0.5),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -494,6 +470,47 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> editDdialogBuilder(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Basic dialog title'),
+          content: Column(children: <Widget>[]),
+          actions: <Widget>[
+            TextButton(
+              style: TextButton.styleFrom(
+                textStyle: Theme.of(context).textTheme.labelLarge,
+              ),
+              child: const Text('Delete'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                textStyle: Theme.of(context).textTheme.labelLarge,
+              ),
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                textStyle: Theme.of(context).textTheme.labelLarge,
+              ),
+              child: const Text('Edit'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -1,27 +1,35 @@
+import 'package:app_of_sales/services/sqlite_helper.dart';
 import 'package:app_of_sales/utils/database.dart';
 import 'package:app_of_sales/utils/date_ops.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 
-import '../services/sqlite_helper.dart';
-import '../services/firestore_service.dart';
 import '../utils/constants.dart';
 
-class NewEntryPage extends StatefulWidget {
+class EditEntryPage extends StatefulWidget {
+  final int? id;
   final DateTime? date;
-  const NewEntryPage({this.date, super.key});
+  final String? name;
+  final int? units;
+  final double? totalPrice;
+  const EditEntryPage({
+    this.id,
+    this.date,
+    this.name,
+    this.units,
+    this.totalPrice,
+    super.key,
+  });
 
   @override
-  State<NewEntryPage> createState() => _NewEntryPageState();
+  State<EditEntryPage> createState() => _EditEntryPageState();
 }
 
-class _NewEntryPageState extends State<NewEntryPage> {
+class _EditEntryPageState extends State<EditEntryPage> {
   DateTime selectedDate = DateTime.now();
 
   DatabaseHelper databaseHelper = DatabaseHelper();
-
-  FirestoreService firestoreHelper = FirestoreService();
 
   var itemController = TextEditingController();
   var priceController = TextEditingController();
@@ -44,6 +52,11 @@ class _NewEntryPageState extends State<NewEntryPage> {
     super.initState();
     typeOfEntry = saleEntry;
     getAndProcessData();
+    priceController.text = (widget.totalPrice! / widget.units!).toString();
+    totalPriceController.text = widget.totalPrice!.toString();
+    itemController.text = widget.name!;
+    changeQuantity(widget.units!);
+    id = widget.id!;
   }
 
   void changeQuantity(int newQuantity) {
@@ -51,11 +64,6 @@ class _NewEntryPageState extends State<NewEntryPage> {
       quantity = newQuantity >= 0 ? newQuantity : 0;
       quantityController.text = quantity.toString();
     });
-  }
-
-  void setPrices() {
-    totalPriceController.text =
-        (quantity * double.parse(priceController.text)).toString();
   }
 
   void getAndProcessData() async {
@@ -106,9 +114,9 @@ class _NewEntryPageState extends State<NewEntryPage> {
     }
 
     print("posting 3");
-    firestoreHelper.create(
-      SalesTable.tableName,
+    await databaseHelper.updateStuff(
       {
+        SalesTable.idCol: id,
         SalesTable.nameCol: itemController.text,
         SalesTable.priceCol: (typeOfEntry == saleEntry)
             ? totalPriceController.text
@@ -118,6 +126,7 @@ class _NewEntryPageState extends State<NewEntryPage> {
         SalesTable.timeCol: getNormalTime(DateTime.now()),
         SalesTable.typeOfEntry: typeOfEntry,
       },
+      SalesTable.tableName,
     );
 
     "${SalesTable.nameCol} : ${itemController.text} \n ${SalesTable.priceCol} : ${typeOfEntry == saleEntry ? priceController.text : priceController.text} ${SalesTable.quantityCol} : $quantity ${SalesTable.dateCol} : ${getNormalDate(selectedDate)} ${SalesTable.timeCol} : ${getNormalTime(DateTime.now())} ${SalesTable.typeOfEntry} : ${typeOfEntry}";
@@ -209,9 +218,6 @@ class _NewEntryPageState extends State<NewEntryPage> {
                     itemController.text = suggestion;
                     priceController.text =
                         prices.elementAt(items.indexOf(suggestion)).toString();
-                    totalPriceController.text =
-                        (prices.elementAt(items.indexOf(suggestion)) * 1)
-                            .toString();
                   },
                 ),
               ),
@@ -300,12 +306,9 @@ class _NewEntryPageState extends State<NewEntryPage> {
                         const SizedBox(height: kPagePadding / 4),
                         TextField(
                           onChanged: (text) {
-                            // changeQuantity(int.parse(text));
-                            totalPriceController.text = (double.parse(text) *
-                                    double.parse(quantityController.text))
-                                .toString();
+                            changeQuantity(int.parse(text));
                           },
-                          controller: priceController,
+                          controller: totalPriceController,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                                 borderRadius:
@@ -330,12 +333,6 @@ class _NewEntryPageState extends State<NewEntryPage> {
                         TypeAheadField(
                           textFieldConfiguration: TextFieldConfiguration(
                             // autofocus: true,
-                            onChanged: (text) {
-                              // changeQuantity(int.parse(text));
-                              totalPriceController.text = (double.parse(text) /
-                                      double.parse(quantityController.text))
-                                  .toString();
-                            },
                             controller: totalPriceController,
                             decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -359,8 +356,8 @@ class _NewEntryPageState extends State<NewEntryPage> {
                             );
                           },
                           onSuggestionSelected: (suggestion) {
+                            // Navigate to a new screen or do something else with the selected suggestion
                             priceController.text = suggestion.toString();
-                            setPrices();
                           },
                         ),
                       ],
@@ -368,6 +365,18 @@ class _NewEntryPageState extends State<NewEntryPage> {
                   ),
                 ],
               ),
+              // TextField(
+              //   controller: priceController,
+              //   decoration: InputDecoration(
+              //     border: OutlineInputBorder(
+              //         borderRadius: BorderRadius.circular(kBorderRadius)),
+              //     hintText: 'Price',
+              //   ),
+              //   keyboardType: const TextInputType.numberWithOptions(
+              //     signed: true,
+              //     decimal: true,
+              //   ),
+              // ),
               const SizedBox(height: kPagePadding),
               const Text("Date"),
               const SizedBox(height: kPagePadding / 4),
@@ -404,7 +413,7 @@ class _NewEntryPageState extends State<NewEntryPage> {
                 onPressed: () async {
                   processAndPostData().then((value) => Navigator.pop(context));
                 },
-                child: const Text("ADD"),
+                child: const Text("UPDATE"),
               ),
             ],
           ),
