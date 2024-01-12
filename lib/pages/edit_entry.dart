@@ -1,4 +1,5 @@
 import 'package:app_of_sales/services/sqlite_helper.dart';
+import 'package:app_of_sales/services/firestore_service.dart';
 import 'package:app_of_sales/utils/database.dart';
 import 'package:app_of_sales/utils/date_ops.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,6 +13,7 @@ class EditEntryPage extends StatefulWidget {
   final DateTime? date;
   final String? name;
   final int? units;
+  final double? unitPrice;
   final double? totalPrice;
   const EditEntryPage({
     this.id,
@@ -19,6 +21,7 @@ class EditEntryPage extends StatefulWidget {
     this.name,
     this.units,
     this.totalPrice,
+    this.unitPrice,
     super.key,
   });
 
@@ -30,6 +33,7 @@ class _EditEntryPageState extends State<EditEntryPage> {
   DateTime selectedDate = DateTime.now();
 
   DatabaseHelper databaseHelper = DatabaseHelper();
+  FirestoreService firestoreService = FirestoreService();
 
   var itemController = TextEditingController();
   var priceController = TextEditingController();
@@ -52,11 +56,7 @@ class _EditEntryPageState extends State<EditEntryPage> {
     super.initState();
     typeOfEntry = saleEntry;
     getAndProcessData();
-    priceController.text = (widget.totalPrice! / widget.units!).toString();
-    totalPriceController.text = widget.totalPrice!.toString();
-    itemController.text = widget.name!;
-    changeQuantity(widget.units!);
-    id = widget.id!;
+    setData();
   }
 
   void changeQuantity(int newQuantity) {
@@ -114,9 +114,25 @@ class _EditEntryPageState extends State<EditEntryPage> {
     }
 
     print("posting 3");
-    await databaseHelper.updateStuff(
+    // await databaseHelper.updateStuff(
+    //   {
+    //     SalesTable.idCol: id,
+    //     SalesTable.nameCol: itemController.text,
+    //     SalesTable.priceCol: (typeOfEntry == saleEntry)
+    //         ? totalPriceController.text
+    //         : "-${totalPriceController.text}",
+    //     SalesTable.quantityCol: quantity,
+    //     SalesTable.dateCol: getNormalDate(selectedDate),
+    //     SalesTable.timeCol: getNormalTime(DateTime.now()),
+    //     SalesTable.typeOfEntry: typeOfEntry,
+    //   },
+    //   SalesTable.tableName,
+    // );
+
+    await firestoreService.update(
+      SalesTable.tableName,
+      widget!.id.toString(),
       {
-        SalesTable.idCol: id,
         SalesTable.nameCol: itemController.text,
         SalesTable.priceCol: (typeOfEntry == saleEntry)
             ? totalPriceController.text
@@ -126,10 +142,21 @@ class _EditEntryPageState extends State<EditEntryPage> {
         SalesTable.timeCol: getNormalTime(DateTime.now()),
         SalesTable.typeOfEntry: typeOfEntry,
       },
-      SalesTable.tableName,
     );
 
     "${SalesTable.nameCol} : ${itemController.text} \n ${SalesTable.priceCol} : ${typeOfEntry == saleEntry ? priceController.text : priceController.text} ${SalesTable.quantityCol} : $quantity ${SalesTable.dateCol} : ${getNormalDate(selectedDate)} ${SalesTable.timeCol} : ${getNormalTime(DateTime.now())} ${SalesTable.typeOfEntry} : ${typeOfEntry}";
+  }
+
+  void deleteData() async {
+    await firestoreService.delete(SalesTable.tableName, id.toString());
+  }
+
+  void setData() {
+    priceController.text = (widget.totalPrice! / widget.units!).toString();
+    totalPriceController.text = widget.totalPrice!.toString();
+    itemController.text = widget.name!;
+    changeQuantity(widget.units!);
+    id = widget.id!;
   }
 
   @override
@@ -395,25 +422,55 @@ class _EditEntryPageState extends State<EditEntryPage> {
                 child: Text("${selectedDate.toLocal()}".split(' ')[0]),
               ),
               const SizedBox(height: kPagePadding * 2),
-              ElevatedButton(
-                style: ButtonStyle(
-                  // shape: OutlinedBorder(),
-                  elevation: MaterialStateProperty.all(0),
-                  backgroundColor: MaterialStateProperty.all(kSecondaryColor),
-                  foregroundColor: MaterialStateProperty.all(kLightColor),
-                  shape: MaterialStateProperty.all(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(kBorderRadius),
+              Row(
+                children: [
+                  ElevatedButton(
+                    style: ButtonStyle(
+                      // shape: OutlinedBorder(),
+                      elevation: MaterialStateProperty.all(0),
+                      backgroundColor:
+                          MaterialStateProperty.all(kSecondaryColor),
+                      foregroundColor: MaterialStateProperty.all(kLightColor),
+                      shape: MaterialStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(kBorderRadius),
+                        ),
+                      ),
+                      padding: MaterialStateProperty.all(
+                        const EdgeInsets.symmetric(
+                            vertical: kPagePadding * 1.5),
+                      ),
                     ),
+                    onPressed: () async {
+                      processAndPostData()
+                          .then((value) => Navigator.pop(context));
+                    },
+                    child: const Text("UPDATE"),
                   ),
-                  padding: MaterialStateProperty.all(
-                    const EdgeInsets.symmetric(vertical: kPagePadding * 1.5),
+                  ElevatedButton(
+                    style: ButtonStyle(
+                      // shape: OutlinedBorder(),
+                      elevation: MaterialStateProperty.all(0),
+                      backgroundColor:
+                          MaterialStateProperty.all(kErrorColor),
+                      foregroundColor: MaterialStateProperty.all(kLightColor),
+                      shape: MaterialStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(kBorderRadius),
+                        ),
+                      ),
+                      padding: MaterialStateProperty.all(
+                        const EdgeInsets.symmetric(
+                            vertical: kPagePadding * 1.5),
+                      ),
+                    ),
+                    onPressed: () async {
+                      processAndPostData()
+                          .then((value) => Navigator.pop(context));
+                    },
+                    child: const Text("DELETE"),
                   ),
-                ),
-                onPressed: () async {
-                  processAndPostData().then((value) => Navigator.pop(context));
-                },
-                child: const Text("UPDATE"),
+                ],
               ),
             ],
           ),
