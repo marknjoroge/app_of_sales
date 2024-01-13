@@ -1,9 +1,12 @@
+import 'package:app_of_sales/utils/check_connection.dart';
 import 'package:app_of_sales/utils/database.dart';
 import 'package:app_of_sales/utils/date_ops.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 
+import '../components/error_posting_dialog.dart';
+import '../components/not_connected_dialog.dart';
 import '../services/sqlite_helper.dart';
 import '../services/firestore_service.dart';
 import '../utils/constants.dart';
@@ -51,6 +54,7 @@ class _NewEntryPageState extends State<NewEntryPage> {
       quantity = newQuantity >= 0 ? newQuantity : 0;
       quantityController.text = quantity.toString();
     });
+    setPrices();
   }
 
   void setPrices() {
@@ -82,7 +86,15 @@ class _NewEntryPageState extends State<NewEntryPage> {
     }
   }
 
-  Future<void> processAndPostData() async {
+  Future<bool> processAndPostData() async {
+    if ((itemController.text) == null ||
+        saleEntry == null ||
+        totalPriceController.text == null ||
+        priceController.text == null ||
+        quantity == null ||
+        getNormalDate(selectedDate) == null ||
+        getNormalTime(DateTime.now()) == null ||
+        typeOfEntry == null) return false;
     print("posting");
     if (!items.contains(itemController.text)) {
       print("posting 1");
@@ -106,9 +118,12 @@ class _NewEntryPageState extends State<NewEntryPage> {
     }
 
     print("posting 3");
+    String myId = selectedDate.millisecondsSinceEpoch.toString();
     firestoreHelper.create(
       SalesTable.tableName,
+      myId,
       {
+        SalesTable.idCol: myId,
         SalesTable.nameCol: itemController.text,
         SalesTable.priceCol: (typeOfEntry == saleEntry)
             ? totalPriceController.text
@@ -118,13 +133,21 @@ class _NewEntryPageState extends State<NewEntryPage> {
         SalesTable.timeCol: getNormalTime(DateTime.now()),
         SalesTable.typeOfEntry: typeOfEntry,
       },
-    );
+    ).then((value) => value);
+
+    return true;
 
     "${SalesTable.nameCol} : ${itemController.text} \n ${SalesTable.priceCol} : ${typeOfEntry == saleEntry ? priceController.text : priceController.text} ${SalesTable.quantityCol} : $quantity ${SalesTable.dateCol} : ${getNormalDate(selectedDate)} ${SalesTable.timeCol} : ${getNormalTime(DateTime.now())} ${SalesTable.typeOfEntry} : ${typeOfEntry}";
   }
 
   @override
   Widget build(BuildContext context) {
+    checkIfConnected().then((value) {
+      if (!value)
+        notConnectedDdialogBuilder(context)
+            .then((value) => Navigator.pop(context));
+    });
+
     selectedDate = widget.date ?? DateTime.now();
 
     return Scaffold(
@@ -402,7 +425,13 @@ class _NewEntryPageState extends State<NewEntryPage> {
                   ),
                 ),
                 onPressed: () async {
-                  processAndPostData().then((value) => Navigator.pop(context));
+                  processAndPostData().then((value) {
+                    if (value)
+                      Navigator.pop(context);
+                    else {
+                      showErrorPostingDialog(context);
+                    }
+                  });
                 },
                 child: const Text("ADD"),
               ),

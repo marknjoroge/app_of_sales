@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:app_of_sales/pages/edit_entry.dart';
 import 'package:app_of_sales/pages/new_entry.dart';
 import 'package:app_of_sales/pages/profits/profits_page.dart';
@@ -9,6 +11,10 @@ import 'package:app_of_sales/utils/database.dart';
 import 'package:app_of_sales/utils/date_ops.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
+import '../components/details_dialog.dart';
+import '../components/not_connected_dialog.dart';
+import '../utils/check_connection.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -54,27 +60,27 @@ class _MyHomePageState extends State<MyHomePage> {
     //       (value) => setState(() => sales = value),
     //     );
 
-    await firestoreHelper
-        .readAll(SalesTable.tableName, getNormalDate(selectedDate))
-        .then(
-          (value) => setState(() => sales = value),
-        );
     double plus = 0;
     double minus = 0;
-    sales.forEach((item) {
-      print("Price: ${item[SalesTable.priceCol]}");
-      double price = item[SalesTable.priceCol];
-      if (price > 0) {
-        plus += price;
-      } else {
-        minus += price.abs();
-      }
-    });
-    print("$plus $sales");
-    setState(() {
-      soldTotal = plus;
-      bought = minus;
-      profit = soldTotal - bought;
+    await firestoreHelper
+        .readAll(SalesTable.tableName, getNormalDate(selectedDate))
+        .then((value) {
+      setState(() => sales = value);
+      sales.forEach((item) {
+        print("Price: ${item[SalesTable.priceCol]}");
+        double price = item[SalesTable.priceCol];
+        if (price > 0) {
+          plus += price;
+        } else {
+          minus += price.abs();
+        }
+      });
+      print("$plus $sales");
+      setState(() {
+        soldTotal = plus;
+        bought = minus;
+        profit = soldTotal - bought;
+      });
     });
     print("reloaded for new data??");
   }
@@ -87,6 +93,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    checkIfConnected().then((value) {
+      if (!value) {
+        notConnectedDdialogBuilder(context).then((value) => exit(0));
+      }
+    });
+
     var textTheme = Theme.of(context).textTheme;
     return Scaffold(
       // backgroundColor: kBgColor,
@@ -373,7 +385,17 @@ class _MyHomePageState extends State<MyHomePage> {
                   //   MaterialPageRoute(
                   //       builder: (context) => const EditEntryPage()),
                   // );
-                  editDdialogBuilder(context);
+                  // editDdialogBuilder(context);
+                  detailsDialogBuilder(
+                    context,
+                    sale[SalesTable.idCol],
+                    sale[SalesTable.dateCol],
+                    sale[SalesTable.timeCol],
+                    sale[SalesTable.typeOfEntry],
+                    sale[SalesTable.nameCol],
+                    sale[SalesTable.quantityCol],
+                    sale[SalesTable.priceCol],
+                  );
                 },
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -385,7 +407,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         Text(
                           '${sale[SalesTable.priceCol]}',
                           style: TextStyle(
-                            color: (sale[SalesTable.priceCol] < 0)
+                            color: (double.parse(sale[SalesTable.priceCol]) < 0)
                                 ? kErrorColor
                                 : kPrimaryColor,
                             fontWeight: FontWeight.w700,
@@ -470,47 +492,6 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-    );
-  }
-
-  Future<void> editDdialogBuilder(BuildContext context) {
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Basic dialog title'),
-          content: Column(children: <Widget>[]),
-          actions: <Widget>[
-            TextButton(
-              style: TextButton.styleFrom(
-                textStyle: Theme.of(context).textTheme.labelLarge,
-              ),
-              child: const Text('Delete'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              style: TextButton.styleFrom(
-                textStyle: Theme.of(context).textTheme.labelLarge,
-              ),
-              child: const Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              style: TextButton.styleFrom(
-                textStyle: Theme.of(context).textTheme.labelLarge,
-              ),
-              child: const Text('Edit'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 }

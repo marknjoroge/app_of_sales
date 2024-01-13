@@ -152,7 +152,7 @@ class _EditEntryPageState extends State<EditEntryPage> {
   }
 
   void setData() {
-    priceController.text = (widget.totalPrice! / widget.units!).toString();
+    priceController.text = widget.unitPrice.toString();
     totalPriceController.text = widget.totalPrice!.toString();
     itemController.text = widget.name!;
     changeQuantity(widget.units!);
@@ -424,51 +424,56 @@ class _EditEntryPageState extends State<EditEntryPage> {
               const SizedBox(height: kPagePadding * 2),
               Row(
                 children: [
-                  ElevatedButton(
-                    style: ButtonStyle(
-                      // shape: OutlinedBorder(),
-                      elevation: MaterialStateProperty.all(0),
-                      backgroundColor:
-                          MaterialStateProperty.all(kSecondaryColor),
-                      foregroundColor: MaterialStateProperty.all(kLightColor),
-                      shape: MaterialStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(kBorderRadius),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ButtonStyle(
+                        // shape: OutlinedBorder(),
+                        elevation: MaterialStateProperty.all(0),
+                        backgroundColor:
+                            MaterialStateProperty.all(kSecondaryColor),
+                        foregroundColor: MaterialStateProperty.all(kLightColor),
+                        shape: MaterialStateProperty.all(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(kBorderRadius),
+                          ),
+                        ),
+                        padding: MaterialStateProperty.all(
+                          const EdgeInsets.symmetric(
+                              vertical: kPagePadding * 1.5),
                         ),
                       ),
-                      padding: MaterialStateProperty.all(
-                        const EdgeInsets.symmetric(
-                            vertical: kPagePadding * 1.5),
-                      ),
+                      onPressed: () async {
+                        processAndPostData()
+                            .then((value) => Navigator.pop(context));
+                      },
+                      child: const Text("UPDATE"),
                     ),
-                    onPressed: () async {
-                      processAndPostData()
-                          .then((value) => Navigator.pop(context));
-                    },
-                    child: const Text("UPDATE"),
                   ),
-                  ElevatedButton(
-                    style: ButtonStyle(
-                      // shape: OutlinedBorder(),
-                      elevation: MaterialStateProperty.all(0),
-                      backgroundColor:
-                          MaterialStateProperty.all(kErrorColor),
-                      foregroundColor: MaterialStateProperty.all(kLightColor),
-                      shape: MaterialStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(kBorderRadius),
+                  const SizedBox(width: kPagePadding / 2),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ButtonStyle(
+                        // shape: OutlinedBorder(),
+                        elevation: MaterialStateProperty.all(0),
+                        backgroundColor:
+                            MaterialStateProperty.all(kErrorColor),
+                        foregroundColor: MaterialStateProperty.all(kLightColor),
+                        shape: MaterialStateProperty.all(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(kBorderRadius),
+                          ),
+                        ),
+                        padding: MaterialStateProperty.all(
+                          const EdgeInsets.symmetric(
+                              vertical: kPagePadding * 1.5),
                         ),
                       ),
-                      padding: MaterialStateProperty.all(
-                        const EdgeInsets.symmetric(
-                            vertical: kPagePadding * 1.5),
-                      ),
+                      onPressed: () async {
+                        processAndPostData()
+                            .then((value) => Navigator.pop(context));
+                      },
+                      child: const Text("DELETE"),
                     ),
-                    onPressed: () async {
-                      processAndPostData()
-                          .then((value) => Navigator.pop(context));
-                    },
-                    child: const Text("DELETE"),
                   ),
                 ],
               ),

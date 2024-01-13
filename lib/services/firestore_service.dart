@@ -4,15 +4,16 @@ class FirestoreService {
   final FirebaseFirestore _firestoreDB = FirebaseFirestore.instance;
 
   // Create a new document in the specified collection
-  void create(String collection, Map<String, dynamic> data) async {
+  Future<bool> create(String collection, String id, Map<String, dynamic> data) async {
     // CollectionReference collectionRef = FirebaseFirestore.instance.collection(collection);
     // collectionRef.add(data);
     // return collectionRef.id;
-    final docRef = _firestoreDB.collection(collection).doc();
+    final docRef = _firestoreDB.collection(collection).doc(id);
 
-    final docId = await docRef.set(data);
+    await docRef.set(data).then((value) => value);
 
     // return docId;
+    return false;
   }
 
   // Read all documents from the specified collection
