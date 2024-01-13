@@ -68,7 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() => sales = value);
       sales.forEach((item) {
         print("Price: ${item[SalesTable.priceCol]}");
-        double price = item[SalesTable.priceCol];
+        double price = double.parse(item[SalesTable.priceCol]);
         if (price > 0) {
           plus += price;
         } else {
@@ -283,81 +283,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Container topBanner(BuildContext context) {
-    return Container(
-      padding: kPagePaddingInsets,
-      decoration: BoxDecoration(
-        // color: kLightBlueColor.withOpacity(0.2),
-        border: Border.all(
-          width: 1.0,
-          color: kDullColorLight,
-        ),
-        borderRadius: BorderRadius.circular(kBorderRadius),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            getNormalDate(selectedDate),
-            style: Theme.of(context).textTheme.labelSmall!.merge(
-                  const TextStyle(
-                    color: kSecondaryColor,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 8,
-                  ),
-                ),
-          ),
-          const SizedBox(height: kPagePadding),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              // const Text(
-              //   "ksh",
-              // ),
-              // const SizedBox(width: kPagePadding / 4),
-              Text(
-                "$profit",
-                style: Theme.of(context).textTheme.headlineMedium!.merge(
-                      TextStyle(
-                        color: profit < 0 ? kErrorColor : kPrimaryColor,
-                      ),
-                    ),
-              ),
-              const SizedBox(width: kPagePadding),
-              const Icon(
-                Icons.file_upload_outlined,
-                color: kErrorColor,
-                size: 10,
-              ),
-              const SizedBox(width: kPagePadding / 4),
-              Text(
-                "$bought",
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall!
-                    .merge(const TextStyle(color: kErrorColor)),
-              ),
-              const SizedBox(width: kPagePadding / 2),
-              const Icon(
-                Icons.file_download_outlined,
-                color: kPrimaryColor,
-                size: 10,
-              ),
-              const SizedBox(width: kPagePadding / 4),
-              Text(
-                "$soldTotal",
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall!
-                    .merge(const TextStyle(color: kPrimaryColor)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget salesContainer(TextTheme textTheme) {
     return Container(
       // padding: kPagePaddingInsets,
@@ -395,7 +320,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     sale[SalesTable.nameCol],
                     sale[SalesTable.quantityCol],
                     sale[SalesTable.priceCol],
-                  );
+                  ).then((value) => reloadForNewDate());
                 },
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

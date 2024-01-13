@@ -46,7 +46,7 @@ Future<void> detailsDialogBuilder(
             style: TextButton.styleFrom(
               textStyle: Theme.of(context).textTheme.labelLarge,
             ),
-            child: const Text('Delete'),
+            child: const Text('Cancel'),
             onPressed: () {
               Navigator.of(context).pop();
             },
@@ -61,7 +61,7 @@ Future<void> detailsDialogBuilder(
                 context,
                 MaterialPageRoute(
                   builder: (context) => EditEntryPage(
-                    id: 0,
+                    id: int.parse(id),
                     date: toDateTime(date, time),
                     name: name,
                     units: quantity,
@@ -76,7 +76,10 @@ Future<void> detailsDialogBuilder(
             // style: TextButton.styleFrom(
             //   textStyle: Theme.of(context).textTheme.labelLarge,
             // ),
-            icon: const Icon(CupertinoIcons.delete),
+            icon: const Icon(
+              CupertinoIcons.delete,
+              color: kErrorColor,
+            ),
             onPressed: () {
               confirmDeleteDialog(context, name, id)
                   .then((value) => Navigator.of(context).pop());

@@ -64,6 +64,12 @@ class _EditEntryPageState extends State<EditEntryPage> {
       quantity = newQuantity >= 0 ? newQuantity : 0;
       quantityController.text = quantity.toString();
     });
+    setPrices();
+  }
+
+  void setPrices() {
+    totalPriceController.text =
+        (quantity * double.parse(priceController.text)).toString();
   }
 
   void getAndProcessData() async {
@@ -129,9 +135,11 @@ class _EditEntryPageState extends State<EditEntryPage> {
     //   SalesTable.tableName,
     // );
 
+    print(widget.id.toString());
+
     await firestoreService.update(
       SalesTable.tableName,
-      widget!.id.toString(),
+      widget.id.toString(),
       {
         SalesTable.nameCol: itemController.text,
         SalesTable.priceCol: (typeOfEntry == saleEntry)
@@ -335,7 +343,7 @@ class _EditEntryPageState extends State<EditEntryPage> {
                           onChanged: (text) {
                             changeQuantity(int.parse(text));
                           },
-                          controller: totalPriceController,
+                          controller: priceController,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                                 borderRadius:
@@ -430,6 +438,30 @@ class _EditEntryPageState extends State<EditEntryPage> {
                         // shape: OutlinedBorder(),
                         elevation: MaterialStateProperty.all(0),
                         backgroundColor:
+                            MaterialStateProperty.all(Colors.transparent),
+                        foregroundColor:
+                            MaterialStateProperty.all(kSecondaryColor),
+                        shape: MaterialStateProperty.all(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(kBorderRadius),
+                          ),
+                        ),
+                        padding: MaterialStateProperty.all(
+                          const EdgeInsets.symmetric(
+                              vertical: kPagePadding * 1.5),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("CANCEL"),
+                    ),
+                  ),
+                  const SizedBox(width: kPagePadding / 2),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ButtonStyle(
+                        // shape: OutlinedBorder(),
+                        elevation: MaterialStateProperty.all(0),
+                        backgroundColor:
                             MaterialStateProperty.all(kSecondaryColor),
                         foregroundColor: MaterialStateProperty.all(kLightColor),
                         shape: MaterialStateProperty.all(
@@ -443,36 +475,10 @@ class _EditEntryPageState extends State<EditEntryPage> {
                         ),
                       ),
                       onPressed: () async {
-                        processAndPostData()
+                        await processAndPostData()
                             .then((value) => Navigator.pop(context));
                       },
                       child: const Text("UPDATE"),
-                    ),
-                  ),
-                  const SizedBox(width: kPagePadding / 2),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ButtonStyle(
-                        // shape: OutlinedBorder(),
-                        elevation: MaterialStateProperty.all(0),
-                        backgroundColor:
-                            MaterialStateProperty.all(kErrorColor),
-                        foregroundColor: MaterialStateProperty.all(kLightColor),
-                        shape: MaterialStateProperty.all(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(kBorderRadius),
-                          ),
-                        ),
-                        padding: MaterialStateProperty.all(
-                          const EdgeInsets.symmetric(
-                              vertical: kPagePadding * 1.5),
-                        ),
-                      ),
-                      onPressed: () async {
-                        processAndPostData()
-                            .then((value) => Navigator.pop(context));
-                      },
-                      child: const Text("DELETE"),
                     ),
                   ),
                 ],
